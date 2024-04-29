@@ -149,7 +149,7 @@ impl<'a> WebsocketHandler {
                     let title = message.reward.title;
                     let username = message.user_name.to_string();
                     let input = message.user_input;
-                    let stream_event = StreamEvent::new(&title, username, input);
+                    let stream_event = StreamEvent::new(&title.to_lowercase(), username, input);
 
                     self.sender
                         .send(stream_event)

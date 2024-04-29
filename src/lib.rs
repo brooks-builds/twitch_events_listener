@@ -1,6 +1,6 @@
 mod auth;
 pub mod config;
-mod stream_event;
+pub mod stream_event;
 mod websocket_handler;
 
 use auth::get_user_token;
@@ -12,6 +12,8 @@ use twitch_api::HelixClient;
 use websocket_handler::WebsocketHandler;
 
 pub async fn run(config: Config, sender: Sender<StreamEvent>) -> Result<()> {
+    println!("Running Twitch Events Listener");
+
     let user_token = get_user_token(&config)
         .await
         .context("authenticating with twitch")?;

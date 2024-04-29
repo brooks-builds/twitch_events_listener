@@ -1,3 +1,5 @@
+#![allow(unused_variables)]
+
 use std::{ops::Deref, sync::mpsc::Sender};
 
 use eyre::{bail, Context, Result};

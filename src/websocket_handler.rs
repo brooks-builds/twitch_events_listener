@@ -1,6 +1,6 @@
 #![allow(unused_variables)]
 
-use std::{ops::Deref, sync::mpsc::Sender};
+use std::{ops::Deref, sync::mpsc::Sender, time::Duration};
 
 use eyre::{bail, Context, Result};
 use tokio_tungstenite::{
@@ -127,17 +127,39 @@ impl<'a> WebsocketHandler {
         streamer: &User,
     ) -> Result<()> {
         let transport = eventsub::Transport::websocket(session_data.id);
+        let streamer_id = streamer.id.clone();
 
         client
             .create_eventsub_subscription(
                 eventsub::channel::ChannelPointsCustomRewardRedemptionAddV1::broadcaster_user_id(
-                    streamer.id.clone(),
+                    streamer_id.clone(),
                 ),
                 transport.clone(),
                 token,
             )
             .await
-            .context("subscribing to events")?;
+            .context("subscribing to custom channel point rewards events")?;
+
+        client
+            .create_eventsub_subscription(
+                eventsub::channel::ChannelChatMessageV1::new(
+                    streamer.id.clone(),
+                    streamer_id.clone(),
+                ),
+                transport.clone(),
+                token,
+            )
+            .await
+            .context("subscribing to channel chat message events")?;
+
+        client
+            .create_eventsub_subscription(
+                eventsub::channel::ChannelAdBreakBeginV1::broadcaster_user_id(streamer_id.clone()),
+                transport.clone(),
+                token,
+            )
+            .await
+            .context("subscribing to channel ad break begin events")?;
 
         Ok(())
     }
@@ -154,6 +176,28 @@ impl<'a> WebsocketHandler {
                     self.sender
                         .send(stream_event)
                         .context("sending redemption message")?;
+                }
+                _ => todo!(),
+            },
+            Event::ChannelChatMessageV1(payload) => match payload.message {
+                eventsub::Message::Notification(message) => {
+                    let stream_event = StreamEvent::ChatMessage {
+                        username: message.chatter_user_name.to_string(),
+                    };
+
+                    self.sender
+                        .send(stream_event)
+                        .context("sending channel chat message event")?;
+                }
+                _ => todo!(),
+            },
+            Event::ChannelAdBreakBeginV1(payload) => match payload.message {
+                eventsub::Message::Notification(message) => {
+                    self.sender
+                        .send(StreamEvent::new_ad_break(Duration::from_secs(
+                            message.duration_seconds.try_into().unwrap_or(90),
+                        )))
+                        .context("sending channel ad break begin event")?;
                 }
                 _ => todo!(),
             },

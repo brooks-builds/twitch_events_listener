@@ -1,12 +1,16 @@
-use std::collections::HashMap;
-
+use crate::config::Config;
+use arboard::Clipboard;
 use eyre::{Context, OptionExt, Result};
 use reqwest::{redirect::Policy, Url};
+use std::collections::HashMap;
 use twitch_api::twitch_oauth2::{Scope, UserToken, UserTokenBuilder};
 
-use crate::config::Config;
-
-const SCOPES: [Scope; 1] = [Scope::ChannelReadRedemptions];
+const SCOPES: [Scope; 4] = [
+    Scope::ChannelReadRedemptions,
+    Scope::UserReadChat,
+    Scope::UserBot,
+    Scope::ChannelReadAds,
+];
 
 pub async fn get_user_token(config: &Config) -> Result<UserToken> {
     let client = reqwest::ClientBuilder::new()
@@ -30,10 +34,17 @@ pub async fn get_user_token(config: &Config) -> Result<UserToken> {
 }
 
 fn get_response_url(auth_url: Url) -> Result<TwitchAuthParts> {
-    println!("Authenticate to Twitch by navigating to the following url: \n\n{auth_url}\n\n");
+    let mut clipboard = Clipboard::new().context("creating clipboard instance")?;
+    clipboard
+        .set_text(auth_url.as_str())
+        .context("setting auth url text to paste buffer")?;
+    println!("Authenticate to Twitch by navigating to the url copied to your paste buffer");
 
     let response = rpassword::prompt_password("Paste in the entire URL:")
         .context("getting twitch auth response")?;
+
+    clipboard.clear().context("clearing clipboard")?;
+
     let response_url = twitch_api::twitch_oauth2::url::Url::parse(&response)
         .context("parseing response URL into twitch auth URL")?;
     let twitch_auth_parts =

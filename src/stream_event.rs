@@ -1,7 +1,11 @@
+use std::time::Duration;
+
 #[derive(Debug)]
 pub enum StreamEvent {
-    ChangeHelixTheme { username: String, theme: String },
+    AdBreakBegin { duration: Duration },
     ChangeFont { username: String, font: String },
+    ChangeHelixTheme { username: String, theme: String },
+    ChatMessage { username: String },
     Unknown,
 }
 
@@ -18,5 +22,9 @@ impl StreamEvent {
             },
             _ => Self::Unknown,
         }
+    }
+
+    pub fn new_ad_break(duration: Duration) -> Self {
+        Self::AdBreakBegin { duration }
     }
 }

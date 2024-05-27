@@ -6,11 +6,22 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+arboard = "3.4.0"
+chrono = "0.4.38"
 dotenvy = "0.15.7"
 eyre = "0.6.12"
 futures = "0.3.30"
-reqwest = "0.11"
+reqwest = "0.12"
 rpassword = "7.3.1"
+time = "0.3.36"
 tokio = { version = "1.37.0", features = ["rt-multi-thread", "rt", "macros"] }
 tokio-tungstenite = { version = "0.21.0", features = ["tokio-rustls", "rustls", "rustls-tls-webpki-roots"] }
-twitch_api = { version = "0.7.0-rc.7", features = ["helix", "reqwest", "eventsub"] }
+# twitch_api = { features = ["helix", "reqwest", "eventsub"], git = "https://github.com/twitch-rs/twitch_api", rev = "2f34c54" }
+twitch_api = { features = ["helix", "reqwest", "eventsub"], git = "https://github.com/BrooksPatton/twitch_api", rev = "0eb3080" }
+# twitch_api = { path = "../../forks/twitch_api/" }
+
+# workaround for https://github.com/twitch-rs/twitch_api/issues/256
+[patch.crates-io.twitch_types]
+git = "https://github.com/BrooksPatton/twitch_api"
+# path = "../../forks/twitch_api/twitch_types"
+rev = "0eb3080" # only if you pinned the repo to a specific revision

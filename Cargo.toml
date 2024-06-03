@@ -19,9 +19,15 @@ tokio-tungstenite = { version = "0.21.0", features = ["tokio-rustls", "rustls", 
 # twitch_api = { features = ["helix", "reqwest", "eventsub"], git = "https://github.com/twitch-rs/twitch_api", rev = "2f34c54" }
 twitch_api = { features = ["helix", "reqwest", "eventsub"], git = "https://github.com/BrooksPatton/twitch_api", rev = "0eb3080" }
 # twitch_api = { path = "../../forks/twitch_api/" }
+catch_auth ={ path = "catch_auth" }
 
 # workaround for https://github.com/twitch-rs/twitch_api/issues/256
 [patch.crates-io.twitch_types]
 git = "https://github.com/BrooksPatton/twitch_api"
 # path = "../../forks/twitch_api/twitch_types"
 rev = "0eb3080" # only if you pinned the repo to a specific revision
+
+[workspace]
+members = [
+  "catch_auth"
+]

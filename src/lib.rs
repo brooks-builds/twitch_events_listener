@@ -5,19 +5,23 @@ mod websocket_handler;
 
 use ::time::OffsetDateTime;
 use auth::get_user_token;
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::DateTime;
 use config::Config;
-use core::time;
 use eyre::{Context, OptionExt, Result};
-use std::{sync::mpsc::Sender, time::Duration};
+use reqwest::Url;
+use std::sync::mpsc::Sender;
 use stream_event::StreamEvent;
+use tokio::sync::oneshot;
 use twitch_api::{helix::channels::get_ad_schedule, HelixClient};
 use websocket_handler::WebsocketHandler;
 
 pub async fn run(config: Config, sender: Sender<StreamEvent>) -> Result<()> {
     println!("Running Twitch Events Listener");
 
-    let user_token = get_user_token(&config)
+    let (code_sender, code_receiver) = oneshot::channel::<Url>();
+    let _catch_auth_server = tokio::spawn(catch_auth::start_server(code_sender));
+
+    let user_token = get_user_token(&config, code_receiver)
         .await
         .context("authenticating with twitch")?;
     let twitch_helix_client: HelixClient<reqwest::Client> = HelixClient::default();
@@ -37,8 +41,6 @@ pub async fn run(config: Config, sender: Sender<StreamEvent>) -> Result<()> {
     let chrono_time = DateTime::from_timestamp(next_ad_in as i64, 0);
     let time_time = OffsetDateTime::from_unix_timestamp(next_ad_in as i64)
         .context("creating offset date time")?;
-
-    dbg!(chrono_time, time_time);
 
     websocket
         .run(&twitch_helix_client, &user_token, &streamer)
